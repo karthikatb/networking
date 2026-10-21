@@ -1,0 +1,110 @@
+import java.io.*;
+import java.net.*;
+
+public class Server {
+    public static void main(String[] args) throws Exception {
+
+        ServerSocket ss = new ServerSocket(9002);
+        System.out.println("Waiting for client...");
+
+        Socket s = ss.accept();
+
+        ObjectInputStream in =
+            new ObjectInputStream(s.getInputStream());
+
+        int n = in.readInt();
+        int[][] a = (int[][]) in.readObject();
+
+        boolean upper = true, lower = true, diagonal = true;
+
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+
+                if (i > j && a[i][j] != 0)
+                    upper = false;
+
+                if (i < j && a[i][j] != 0)
+                    lower = false;
+
+                if (i != j && a[i][j] != 0)
+                    diagonal = false;
+            }
+        }
+
+        String result;
+
+        if (diagonal)
+            result = "Diagonal Matrix";
+        else if (upper)
+            result = "Upper Triangular Matrix";
+        else if (lower)
+            result = "Lower Triangular Matrix";
+        else
+            result = "Normal Matrix";
+
+        System.out.println(result);
+
+        DataOutputStream out =
+            new DataOutputStream(s.getOutputStream());
+
+        out.writeUTF(result);
+
+        s.close();
+        ss.close();
+    }
+}
+
+
+
+
+
+import java.io.*;
+import java.net.*;
+import java.util.*;
+
+public class Client {
+    public static void main(String[] args) throws Exception {
+
+        Socket s = new Socket("localhost", 9002);
+        Scanner sc = new Scanner(System.in);
+
+        System.out.print("Enter matrix order: ");
+        int n = sc.nextInt();
+
+        int[][] a = new int[n][n];
+
+        System.out.println("Enter matrix elements:");
+
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                a[i][j] = sc.nextInt();
+            }
+        }
+
+        System.out.println("Entered Matrix:");
+
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                System.out.print(a[i][j] + " ");
+            }
+            System.out.println();
+        }
+
+        ObjectOutputStream out =
+            new ObjectOutputStream(s.getOutputStream());
+
+        out.writeInt(n);
+        out.writeObject(a);
+        out.flush();
+
+        DataInputStream in =
+            new DataInputStream(s.getInputStream());
+
+        System.out.println("Matrix Type: " + in.readUTF());
+
+        s.close();
+        sc.close();
+    }
+}
+
+

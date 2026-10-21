@@ -1,0 +1,92 @@
+
+import java.io.*;
+import java.net.*;
+import java.util.*;
+
+public class ChatServer {
+
+    static Vector<PrintWriter> clients = new Vector<>();
+
+    public static void main(String[] args) throws Exception {
+
+        ServerSocket server = new ServerSocket(5000);
+        System.out.println("Server started...");
+
+        while (true) {
+            Socket socket = server.accept();
+            System.out.println("Client connected");
+
+            new Thread(() -> {
+                try {
+                    BufferedReader in = new BufferedReader(
+                        new InputStreamReader(socket.getInputStream()));
+
+                    PrintWriter out = new PrintWriter(
+                        socket.getOutputStream(), true);
+
+                    clients.add(out);
+
+                    String name = in.readLine();
+                    String msg;
+
+                    while ((msg = in.readLine()) != null) {
+                        for (PrintWriter client : clients) {
+                            if (client != out) {
+                                client.println(name + ": " + msg);
+                            }
+                        }
+                    }
+
+                    clients.remove(out);
+                    socket.close();
+
+                } catch (Exception e) {
+                    System.out.println("Client disconnected");
+                }
+            }).start();
+        }
+    }
+}
+
+
+
+import java.io.*;
+import java.net.*;
+import java.util.Scanner;
+
+public class ChatClient {
+
+    public static void main(String[] args) throws Exception {
+
+        Socket socket = new Socket("localhost", 5000);
+
+        BufferedReader in = new BufferedReader(
+            new InputStreamReader(socket.getInputStream()));
+
+        PrintWriter out = new PrintWriter(
+            socket.getOutputStream(), true);
+
+        Scanner sc = new Scanner(System.in);
+
+        System.out.print("Enter name: ");
+        String name = sc.nextLine();
+        out.println(name);
+
+        new Thread(() -> {
+            try {
+                String msg;
+                while ((msg = in.readLine()) != null) {
+                    System.out.println(msg);
+                }
+            } catch (Exception e) {
+                System.out.println("Disconnected");
+            }
+        }).start();
+
+        while (true) {
+            String msg = sc.nextLine();
+            out.println(msg);
+        }
+    }
+}
+
